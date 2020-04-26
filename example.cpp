@@ -207,11 +207,23 @@ int main(){
     funct();
     std::vector<int> V{5, 6, 4, 3, 2, 6, 7, 9, 3};
     std::cout << "\n";
-    print_seq_container(V);
+    print_seq_container(V); // nth_element - просто переброска элеменов из одного конца в другой  в соответсвии с оператором сравнения, который мы тоже можем передать
     std::nth_element(V.begin(), V.begin() + (int) (V.size() / 2), V.end(), std::less<int>());
     print_seq_container(V);
-    std::partial_sort(V.begin(), V.begin() + (int) (V.size() / 2), V.end());
-    print_seq_container(V);
+    std::partial_sort(V.begin(), V.begin() + (int) (V.size() / 2), V.end()); // просто сортировка в конкретном диапазоне
+    print_seq_container(V); // тоже разные типы сортировок, тут сы явно передаём область для сортировки
+    // Тоже рассмотрим алгоритм, который по итераторам ищет разницу между множествами, то есть элементы не образующие объеденение
+    // binary_search(begin, end, val, comp) // returns True of False в зависимости от того есть ли там элемент
+    std::vector<int> haystack {1, 3, 4, 5, 9};
+    std::vector<int> needles {1, 2, 3};  
+    for (auto & needle: needles){
+        std::cout << "Searching for " << needle << std::endl;
+        if(std::binary_search(haystack.begin(), haystack.end(), needle)){
+            std::cout << "Found: " << needle << std::endl;
+        }else{
+            std::cout << "not Found: " << std::endl;            
+        }
+    }
     return 0;
 }
 
