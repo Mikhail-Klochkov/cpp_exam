@@ -9,6 +9,7 @@
 #include <vector>
 #include <list>
 #include <typeinfo>
+#include <functional>
 
 template <typename T>
 void enter_set(const std::multiset<T>&  mset){
@@ -81,7 +82,23 @@ void my_reverse(BidiIt first, BidiIt last){ // Мы принимаем типы 
         std::cout << "category of iterator is: a Nonedefault" << std::endl;                
     }
 }
-
+template <typename U>
+struct F{ //  rvalue type он не может принимать и вызывать
+    U value;
+    F() {}
+    void operator() (U elem) const{
+        std::cout << "here" << std::endl;
+        std::cout << elem << " ";
+    }
+};
+template <class Container>
+void print_seq_container(const Container & container){
+    typename Container::const_iterator it = container.cbegin();
+    while(it != container.cend()){
+        std::cout << *it++ << "  ";
+    } 
+    std::cout << std::endl;
+}
 int main(){
     
     std::multiset<std::string> cities = {"Volgograd", "Samara", "Volgograd"};
@@ -177,6 +194,24 @@ int main(){
     for (auto & el: c){
         std::cout << el << " ";
     }
+    // В качестве типа данных, который позволит не использовать auto для лямбд выражений или функциональных объектов
+    std::function<void(int)> functional_obj = [](int elem){
+                                                std::cout << elem << " ";   };
+    F<int> foo;
+    int a = 9;
+    foo(a);
+    foo(10);
+    functional_obj(10);    
+    std::function<void()> funct = [&foo](){
+                        foo(12);  };
+    funct();
+    std::vector<int> V{5, 6, 4, 3, 2, 6, 7, 9, 3};
+    std::cout << "\n";
+    print_seq_container(V);
+    std::nth_element(V.begin(), V.begin() + (int) (V.size() / 2), V.end(), std::less<int>());
+    print_seq_container(V);
+    std::partial_sort(V.begin(), V.begin() + (int) (V.size() / 2), V.end());
+    print_seq_container(V);
     return 0;
 }
 

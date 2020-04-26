@@ -11,6 +11,10 @@
 #include <deque>
 #include <sstream>
 #include <cstdlib>
+#include <stdexcept>
+#include <limits>
+#include <unordered_set>
+#include <unordered_map>
 
 
 // Очень часто лямбда выражения более удобны, так как они избегают
@@ -94,6 +98,21 @@ void type_of_iterator(const Container& container){
         std::cout << "category of iterator is: a Itr_forw" << std::endl;
 	}else{
         std::cout << "category of iterator is: a Nonetype" << std::endl;		
+	}
+}
+template <typename Type>
+class Functor_add_value{
+	private:
+	Type value_add;
+	public:
+		Functor_add_value(Type add_) : value_add(add_) {}
+		void operator() (Type & elem) const {
+			elem += value_add;
+		} 
+};
+void Myfunc(int c){
+	if(c > std::numeric_limits<char>::max()){
+		throw std::invalid_argument("My funct argument too large");
 	}
 }
 int main(){
@@ -199,6 +218,29 @@ int main(){
 	// По сути функторы - это такие объекты, которые просто ведут себя как функция и не более
 	//  функтор - это всё, что можно вызвать с помощью (args... ) и передаваемым объектам
 	// Преимущества функциональных объектов:
-	
+	// 1) Объекты которые ведут себя как указатели - есть интелектуальные указатели, тоже самое и относиться к объектам, которые ведут себя как функции
+	// 2) Они, по мимо, того, что ведут себя как функции, они например могут сохранять состояние. Также их возможно инициализировать в хоже выволнения программы
+	// 3) Каждый функциональный объект имеет разный тип, даже если сигнатура вызова данного объекта совпадает, мы можем передавать в качестве шаблона определённое функциональное поведение, смотреть как реализована for_each
+
+	std::list<int> l2;
+	for(int i = 1; i <= 9; ++i){
+		l2.push_back(i);
+	} 
+	std::for_each(l2.begin(), l2.end(), Functor_add_value<int>(*l2.begin()));
+	print_seq_container(l2);
+
+	try{
+		Myfunc(1);
+	}catch(std::invalid_argument & e) // Мы тут отлавливаем конкретный тип ошибки, которая нам нужна
+	{
+		std::cerr << e.what() << std::endl;
+		return -1;
+	}
+	// Так как дружественные функции для шублонный классов не являются непосредственно самими членами таких классов, для их них нужно
+	// Сделать отдельно своё шаблонное описание!
+	std::unordered_multiset<int> anm;
+	std::unordered_multimap<int, std::string> anmm;
+	type_of_iterator(anm);
+	type_of_iterator(anmm);
 	return 0;
 }
