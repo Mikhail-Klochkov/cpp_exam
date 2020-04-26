@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <vector>
 #include <list>
+#include <typeinfo>
 
 template <typename T>
 void enter_set(const std::multiset<T>&  mset){
@@ -58,6 +59,29 @@ std::ostream & operator << (std::ostream & stream, const std::pair<T1, T2> & pai
     stream << "{" << pair.first << " : " << pair.second << " }" << " ";
     return stream;
 }
+//  попробуем с помощью контекста traits написать метод реверсирования при этом не конкретизируя какая категория итераторов нам попалась
+template <class BidiIt>  // Bi direction iterator
+void my_reverse(BidiIt first, BidiIt last){ // Мы принимаем типы значений как итератор 
+    typename std::iterator_traits<BidiIt>::difference_type n = std::distance(first, last);
+    --n; // Переместится но не прыгнуть в конец last
+    while(n > 0){ // по сути мы тут реализовываем swap 
+        typename std::iterator_traits<BidiIt>::value_type tmp = *first;
+        *(++first) = *--last; // Мы обменяли
+        *last = tmp;
+        n -= 2;
+    }
+    typedef typename std::iterator_traits<BidiIt>::iterator_category it_cat;
+    typedef typename std::random_access_iterator_tag Itr_rand;
+    typedef typename std::bidirectional_iterator_tag Itr_bidir;
+    if(typeid(it_cat) == typeid(Itr_rand)){
+        std::cout << "category of iterator is: a random_access_iterator_tag " << std::endl;
+    }else if(typeid(it_cat) == typeid(Itr_bidir)){
+        std::cout << "category of iterator is: a bidirectional_iterator_tag " << std::endl;        
+    }else{
+        std::cout << "category of iterator is: a Nonedefault" << std::endl;                
+    }
+}
+
 int main(){
     
     std::multiset<std::string> cities = {"Volgograd", "Samara", "Volgograd"};
@@ -143,6 +167,16 @@ int main(){
     //std::equal(coll.begin(), coll.end(), coll_another.begin());
     //  Но размеры второго диапазона должны быть не меньшк чем у первого
     // Чтобы перезапись не происходила в несуществующие элемнты другого контейнера
+    std::vector<int> b{1,2,4,5,5,6,8,0};
+    my_reverse(b.begin(), b.end());
+    for (auto & el: b){
+        std::cout << el << " ";
+    }
+    std::list<int> c = {1,3,4,5,5,87,8};
+    my_reverse(c.begin(), c.end());
+    for (auto & el: c){
+        std::cout << el << " ";
+    }
     return 0;
 }
 
