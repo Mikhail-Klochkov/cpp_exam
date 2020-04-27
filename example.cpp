@@ -10,6 +10,7 @@
 #include <list>
 #include <typeinfo>
 #include <functional>
+#include <stdio.h>
 
 template <typename T>
 void enter_set(const std::multiset<T>&  mset){
