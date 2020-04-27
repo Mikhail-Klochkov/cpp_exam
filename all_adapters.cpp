@@ -6,6 +6,7 @@
 #include <ostream>
 #include <queue>
 #include <functional>
+#include <utility> // std::pair<> // std::move
 
 template <class Container>
 void print_seq(const Container & container){
@@ -19,6 +20,14 @@ template <typename T> void print_queue(T & q){
         q.pop(); // only head 
     }
     std::cout << "\n";
+}
+struct Foo{
+    Foo() {std::cout << "Foo::Foo\n";}
+    ~Foo() {std::cout << "Foo::~Foo\n";}
+    void bar() {std::cout << "Foo::bar\n";}
+};
+void f(const Foo& foo){
+    std::cout << "f(const Foo&\n";
 }
 int main()
 {
@@ -78,5 +87,19 @@ int main()
                                             return ++n;
     });
     print_seq(v_n);
+    std::unique_ptr<Foo> p1(new Foo); // Создаст единственный объект 
+    if(p1){
+        p1->bar();
+    }
+    {
+        // another block
+        std::unique_ptr<Foo> p2(std::move(p1)); // move используется, чтобы решить может ли объект быть перемещён
+        f(*p2);
+        p1 = std::move(p2);
+        std::cout << "destroying p2..\n";
+    }
+    if(p1) p1->bar();
+    // Экземпляр foo уничтожен, когда пора покидать область видиости 
+    // аларрвы
     return 0;
 }
