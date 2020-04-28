@@ -538,3 +538,88 @@ struct compare : pyblic std::binary_function<int, int, bool> {
 	}
 }
 template <typename T1, typename T2>
+// Многопоточность(блокировка потоков, низкоуровневый интерфей в отличии от std::future)
+void  do_Something();
+std::thread t(do_Something); // Желательно нам передать именно данные по копии, иначе могут быть столкновения потоков в борьбе за данные 
+...
+t.join();// Мы до этого места блокируем поток t пока не закончится выполнение работы функционального объекта
+t.detach(); // или мы желаем отсоединиться от потока никак им не управляя далее 
+#include <mutex>
+std::mutex mtx;
+std::lock_guard<std::mutex> lck(mtx);
+/// что - то что определяет владение только одного потока, тобы не было конфликтов по умолчанию
+std::thread th1(compute, 0, 100);
+std::thread th2(compute, 100, 200);
+th1.join();
+th2.join();
+std::thread::this_thread_sleep_for(std::chrono::milliseconds(id(dre)));
+std::future<int> results result1(std::async(funct1));
+result1.get();
+
+
+
+#include <iostream>
+#include <thread>
+#include <future>
+#include <chrono>
+#include <exception>
+#include <random>
+
+int do_Something_(char c){
+    std::default_random_engine dre(c); //  типа seed гарантия того, что будут созданы разные случайные сила последовательностей
+    std::uniform_int_distribution<int> id(10, 1000);
+    for(int i = 0 ; i < 10; ++i){
+        std::this_thread::sleep_for(std::chrono::milliseconds(id(dre))); // Используется для задержки текущего потока
+        std::cout << c << " " << std::flush; 
+    }
+    return c;
+}
+void doSomething(int num, char c){
+    try{
+         std::default_random_engine dre(c * 42); //  типа seed гарантия того, что будут созданы разные случайные сила последовательностей
+         std::uniform_int_distribution<int> id(10, 1000);
+         for(int i = 0; i < 10; ++i){
+             std::this_thread::sleep_for(std::chrono::milliseconds(id(dre)));
+             std::cout << c << std::flush;
+         }
+    }catch (const exception & e){
+        ...
+    }
+}
+int func1(){
+    return do_Something_('.');
+}
+int func2(){
+    return do_Something_('+');
+}
+int main()
+{
+    std::cout << "starting funct(1) in background" << "and funct(2) in foreground" << std::endl;
+    
+//std::async обеспечивает интерфейс для выполнения каких-то действий в отдельном потоке, на фоне каких-то других процессов
+// std::future<> позволяет ждать завершения работы потока и затем предоставляет доступ к результату, который выполнен в данном потоке
+// пусть мы попробуем вычислить сумму по результатм работы двух функций func(1) + func(2)
+// func1 выполнение операций в фоновом потоке процесса
+// std::async  - пытается здесь немедленно начать выполнение процесса func1 ассинхроно в отдельном потоке 
+    std::future<int> result1(std::async(func1)); // а тут начинаем асинхронное выполнение
+    // future открывает доступ к будущему результату работы некоторой функциональной сущности в фоновом режиме
+    // std::future также гарантирует, что рано или поздно будет выполнена работа функциональной сущности в потоке
+    int result2 = func2(); //  вызываем здесь синхронно
+    // При вызове get могут произойти три события
+    // 1) Если выполнение f1 уже закончилось мы получим результат немедленно
+    // 2) Если f1 ещё работает, то get блокирует поток, и ждёт когда она выполниться
+    // 3) Если у нас ещё даже не начато выполнение потоком асинх f1, то выполнение будет принудительно начато(но только в синхронном пор-ке)
+// Такая схема очень важна, она так или иначе, не зависимо от того, в каком виде она запустилась(многопоточность, однопоточное) .. jyf dsgjkybncz
+//std::async() - ничего нам не гарантирует по поводу выполнения программы
+
+    int result = result1.get() + result2; // Лучше первой вызвать get() но не наоборот так как вообще говоря поряжок вычислений в правой части неопределён
+    
+    std::cout << "\n result of f1 + f2: " << result << std::endl;
+    try{
+        std::thread t1(doSomething, 5, '.'); // ПО копии передаём параметры функционального объекта
+        std::cout << "- started fg thread " << t1.get_id() << std::endl; // Вызовем id данного потока
+    }
+    return 0;
+}
+
+
